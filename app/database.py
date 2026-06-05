@@ -639,6 +639,12 @@ def _get_schema_version(conn: ConnectionWrapper) -> int:
         ver = row["ver"] if isinstance(row, dict) else row[0]
         return ver if ver is not None else 0
     except Exception:
+        # PostgreSQL aborts the transaction when the table doesn't exist.
+        # Roll back to clear the aborted state before continuing.
+        try:
+            conn.rollback()
+        except Exception:
+            pass
         return 0
 
 
@@ -704,7 +710,7 @@ def init_db() -> None:
     """
     Apply any outstanding migrations to the active database.
     Dispatches to the correct backend automatically.
-    Safe to call on every startup — migrations are idempotent.
+    Safe to call on every startup — migrations are tent.
     """
     if _backend == "postgres":
         _init_postgres()
