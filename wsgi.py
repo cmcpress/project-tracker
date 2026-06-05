@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # Load PostgreSQL connection config and initialise the database
 # ---------------------------------------------------------------------------
 
-cfg_path = Path(__file__).parent / "data" / "config.json"
+cfg_path = Path(__file__).parent.parent / "data" / "config.json"
 
 if not cfg_path.exists():
     logger.error("data/config.json not found. Run the server setup script first.")
