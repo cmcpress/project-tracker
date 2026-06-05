@@ -675,13 +675,43 @@ def _init_postgres() -> None:
                 logger.info("Applying PostgreSQL migration v%d", version)
                 for stmt in statements:
                     stmt = stmt.strip()
-                    if stmt:
+                    if not stmt:
+                        continue
+                    try:
                         conn.execute(stmt)
+                    except Exception as exc:
+                        conn.rollback()
+                        logger.error(
+                            "Migration v%d FAILED\nStatement: %s\nError: %s",
+                            version, stmt[:300], exc
+                        )
+                        raise RuntimeError(
+                            f"PostgreSQL migration v{version} failed: {exc}\n"
+                            f"Statement: {stmt[:300]}"
+                        ) from exc
                 conn.execute(
                     "INSERT INTO schema_version (version) VALUES (%s) "
                     "ON CONFLICT (version) DO NOTHING",
                     (version,)
                 )
+                conn.commit()
+                logger.info("PostgreSQL migration v%d applied", version)
+    finally:
+        conn.close()
+
+
+def init_db() -> None:
+    """
+    Apply any outstanding migrations to the active database.
+    Dispatches to the correct backend automatically.
+    Safe to call on every startup — migrations are idempotent.
+    """
+    if _backend == "postgres":
+        _init_postgres()
+    else:
+        if _db_path is None:
+            raise RuntimeError("Database path has not been set. Call set_db_path() first.")
+        _init_sqlite()
                 conn.commit()
                 logger.info("PostgreSQL migration v%d applied", version)
     finally:
