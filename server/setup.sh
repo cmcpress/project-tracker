@@ -5,23 +5,15 @@
 #
 # Target:  Ubuntu 22.04 x86_64 on Oracle Cloud Free Tier (1GB RAM)
 #
-# What this script does:
-#   1. Opens firewall ports (80, 443)
-#   2. Installs system packages (nginx, PostgreSQL, Python, Certbot)
-#   3. Creates the PostgreSQL database and user
-#   4. Creates the app user and directory
-#   5. Writes the app configuration (data/config.json)
-#   6. Installs Python dependencies
-#   7. Runs database migrations
-#   8. Configures nginx as a reverse proxy
-#   9. Gets a free SSL certificate from Let's Encrypt
-#  10. Sets up DuckDNS IP auto-renewal
-#  11. Creates a systemd service to keep the app running
+# Supports:
+#   - DuckDNS subdomain (free, e.g. myapp.duckdns.org)
+#   - Own domain name  (e.g. tracker.mydomain.com)
 #
 # Usage:
 #   chmod +x setup.sh
 #   sudo bash setup.sh
 #
+# Safe to re-run — all steps are idempotent.
 # =============================================================================
 
 set -euo pipefail
@@ -40,80 +32,80 @@ warn()  { echo -e "${YELLOW}[!]${NC} $1"; }
 error() { echo -e "${RED}[✗]${NC} $1"; exit 1; }
 step()  { echo -e "\n${GREEN}━━━${NC} $1"; }
 
-# Must run as root
 [ "$EUID" -eq 0 ] || error "Run with: sudo bash setup.sh"
 
 # ---------------------------------------------------------------------------
-# Collect configuration interactively — no personal data in this file
+# Collect configuration
 # ---------------------------------------------------------------------------
 
 echo ""
 echo "Project Tracker — Server Setup"
 echo "================================"
-echo "You will be asked for a few values before setup begins."
 echo ""
 
-read -rp "Your DuckDNS subdomain (e.g. myapp for myapp.duckdns.org): " SUBDOMAIN
-[ -n "$SUBDOMAIN" ] || error "Subdomain cannot be empty."
-DOMAIN="${SUBDOMAIN}.duckdns.org"
-
-read -rsp "Your DuckDNS token (from duckdns.org dashboard): " DUCKDNS_TOKEN
+# Domain type
+echo "Domain type:"
+echo "  1) DuckDNS subdomain (free — e.g. myapp.duckdns.org)"
+echo "  2) Own domain name   (e.g. tracker.mydomain.com)"
 echo ""
-[ -n "$DUCKDNS_TOKEN" ] || error "DuckDNS token cannot be empty."
+read -rp "Choose [1/2]: " DOMAIN_TYPE
+[[ "$DOMAIN_TYPE" == "1" || "$DOMAIN_TYPE" == "2" ]] || error "Enter 1 or 2."
 
-read -rp "Your email address (for SSL certificate renewal notices): " CERTBOT_EMAIL
+if [ "$DOMAIN_TYPE" = "1" ]; then
+    read -rp "DuckDNS subdomain (just the name, e.g. myapp): " SUBDOMAIN
+    [ -n "$SUBDOMAIN" ] || error "Subdomain cannot be empty."
+    DOMAIN="${SUBDOMAIN}.duckdns.org"
+    read -rsp "DuckDNS token (from duckdns.org dashboard, hidden): " DUCKDNS_TOKEN
+    echo ""
+    [ -n "$DUCKDNS_TOKEN" ] || error "DuckDNS token cannot be empty."
+    USE_DUCKDNS=true
+else
+    read -rp "Your domain name (e.g. tracker.mydomain.com): " DOMAIN
+    [ -n "$DOMAIN" ] || error "Domain cannot be empty."
+    warn "Make sure your domain's DNS A record points to this server's IP before continuing."
+    read -rp "Press Enter when DNS is ready, or Ctrl+C to abort: " _
+    USE_DUCKDNS=false
+fi
+
+read -rp "Email address (for SSL certificate renewal notices): " CERTBOT_EMAIL
 [ -n "$CERTBOT_EMAIL" ] || error "Email cannot be empty."
 
 read -rp "GitHub repo URL (e.g. https://github.com/username/project-tracker.git): " GITHUB_REPO
 [ -n "$GITHUB_REPO" ] || error "GitHub repo URL cannot be empty."
 
-# Fixed values
 DB_NAME="projecttracker"
 DB_USER="ptuser"
 APP_DIR="/opt/project-tracker"
 APP_USER="ptapp"
-
-# Generate a random database password
 DB_PASS=$(openssl rand -base64 24 | tr -d '/+=')
 
 echo ""
 echo "Setup will use:"
-echo "  Domain   : ${DOMAIN}"
-echo "  App dir  : ${APP_DIR}"
-echo "  DB name  : ${DB_NAME}"
+echo "  Domain : ${DOMAIN}"
+echo "  App dir: ${APP_DIR}"
+echo "  DB name: ${DB_NAME}"
 echo ""
 read -rp "Proceed? (y/n): " CONFIRM
 [ "$CONFIRM" = "y" ] || error "Aborted."
 
 # ---------------------------------------------------------------------------
-# Step 1 — System update and package installation
+# Step 1 — System update and packages (including ufw)
 # ---------------------------------------------------------------------------
 step "Installing system packages"
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 apt-get upgrade -y -qq
-
 apt-get install -y -qq \
-    python3 \
-    python3-pip \
-    python3-venv \
-    python3-dev \
-    postgresql \
-    postgresql-contrib \
-    libpq-dev \
-    nginx \
-    certbot \
-    python3-certbot-nginx \
-    git \
-    curl \
-    openssl \
-    ufw
+    python3 python3-pip python3-venv python3-dev \
+    postgresql postgresql-contrib libpq-dev \
+    nginx certbot python3-certbot-nginx \
+    git curl openssl ufw
 
 info "System packages installed"
 
 # ---------------------------------------------------------------------------
-# Step 2 — Open OS firewall ports (ufw now installed)
+# Step 2 — Firewall
 # ---------------------------------------------------------------------------
 step "Configuring firewall"
 
@@ -121,29 +113,32 @@ ufw allow OpenSSH
 ufw allow 80/tcp
 ufw allow 443/tcp
 ufw --force enable
-info "Firewall configured (ports 22, 80, 443 open)"
+info "Firewall configured"
 
-warn "If the site is unreachable after setup, also open ports 80 and 443 in:"
-warn "Oracle Cloud Console → Networking → Virtual Cloud Networks"
-warn "→ your VCN → Security Lists → Default Security List → Add Ingress Rules"
+warn "If the site is unreachable, also open ports 80 and 443 in:"
+warn "Oracle Cloud Console → Networking → VCN → Security Lists → Add Ingress Rules"
 
 # ---------------------------------------------------------------------------
-# Step 3 — PostgreSQL setup
+# Step 3 — PostgreSQL
 # ---------------------------------------------------------------------------
 step "Configuring PostgreSQL"
 
 systemctl enable postgresql
 systemctl start postgresql
 
-sudo -u postgres psql -v ON_ERROR_STOP=1 << SQL
-CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';
-CREATE DATABASE ${DB_NAME} OWNER ${DB_USER};
-GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};
-SQL
+# Idempotent — skip if already exists
+sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'" \
+    | grep -q 1 || sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';"
 
-# Tune PostgreSQL for 1GB RAM
-PG_CONF=$(sudo -u postgres psql -t -c "SHOW config_file;" | tr -d ' ')
-cat >> "${PG_CONF}" << PGCONF
+sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" \
+    | grep -q 1 || sudo -u postgres psql -c "CREATE DATABASE ${DB_NAME} OWNER ${DB_USER};"
+
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};"
+
+# Tune for 1GB RAM (idempotent — append only adds once)
+PG_CONF=$(sudo -u postgres psql -t -c "SHOW config_file;" | tr -d ' \n')
+if ! grep -q "Project Tracker tuning" "${PG_CONF}"; then
+    cat >> "${PG_CONF}" << PGCONF
 
 # Project Tracker tuning for 1GB RAM instance
 shared_buffers = 128MB
@@ -152,30 +147,35 @@ work_mem = 4MB
 maintenance_work_mem = 64MB
 max_connections = 20
 PGCONF
+fi
 
 systemctl restart postgresql
 info "PostgreSQL configured"
 
 # ---------------------------------------------------------------------------
-# Step 4 — Create app user and directory
+# Step 4 — App user and directory
 # ---------------------------------------------------------------------------
 step "Creating app user and directory"
 
-useradd --system --no-create-home --shell /sbin/nologin ${APP_USER} 2>/dev/null || true
-mkdir -p ${APP_DIR}
+id -u ${APP_USER} &>/dev/null || useradd --system --no-create-home --shell /sbin/nologin ${APP_USER}
 mkdir -p ${APP_DIR}/data
 
 # ---------------------------------------------------------------------------
-# Step 5 — Clone the application
+# Step 5 — Clone application
 # ---------------------------------------------------------------------------
 step "Cloning application from GitHub"
 
-warn "If the repo is private, enter your GitHub username and personal access token when prompted."
-git clone ${GITHUB_REPO} ${APP_DIR}/repo
-info "Application cloned"
+if [ -d "${APP_DIR}/repo/.git" ]; then
+    warn "Repo already exists — pulling latest instead"
+    git -C ${APP_DIR}/repo pull
+else
+    warn "If the repo is private, enter your GitHub username and personal access token when prompted."
+    git clone ${GITHUB_REPO} ${APP_DIR}/repo
+fi
+info "Application ready"
 
 # ---------------------------------------------------------------------------
-# Step 6 — Python virtual environment and dependencies
+# Step 6 — Python environment and dependencies
 # ---------------------------------------------------------------------------
 step "Installing Python dependencies"
 
@@ -186,10 +186,12 @@ ${APP_DIR}/venv/bin/pip install gunicorn -q
 info "Python dependencies installed"
 
 # ---------------------------------------------------------------------------
-# Step 7 — Write app configuration
+# Step 7 — App configuration
 # ---------------------------------------------------------------------------
 step "Writing app configuration"
 
+# Only write config if it doesn't already contain a pg_connection
+if [ ! -f "${APP_DIR}/data/config.json" ]; then
 cat > ${APP_DIR}/data/config.json << JSON
 {
   "pg_connection": {
@@ -202,12 +204,14 @@ cat > ${APP_DIR}/data/config.json << JSON
   }
 }
 JSON
-
-chmod 600 ${APP_DIR}/data/config.json
-info "config.json written (readable by root only)"
+    chmod 600 ${APP_DIR}/data/config.json
+    info "config.json written"
+else
+    warn "config.json already exists — skipping (delete it to regenerate)"
+fi
 
 # ---------------------------------------------------------------------------
-# Step 8 — Run database migrations
+# Step 8 — Database migrations
 # ---------------------------------------------------------------------------
 step "Running database migrations"
 
@@ -226,14 +230,12 @@ set_postgres_config(
 init_db()
 print("Migrations applied successfully.")
 PYEOF
-
 info "Database migrations complete"
 
 # ---------------------------------------------------------------------------
-# Step 9 — Set ownership
+# Step 9 — Permissions
 # ---------------------------------------------------------------------------
-step "Setting file permissions"
-
+step "Setting permissions"
 chown -R ${APP_USER}:${APP_USER} ${APP_DIR}
 chmod 750 ${APP_DIR}
 info "Permissions set"
@@ -271,13 +273,12 @@ SERVICE
 
 touch /var/log/projecttracker-access.log /var/log/projecttracker-error.log
 chown ${APP_USER}:${APP_USER} /var/log/projecttracker-*.log
-
 systemctl daemon-reload
 systemctl enable projecttracker
 info "Systemd service created"
 
 # ---------------------------------------------------------------------------
-# Step 11 — Nginx configuration
+# Step 11 — Nginx
 # ---------------------------------------------------------------------------
 step "Configuring nginx"
 
@@ -285,7 +286,6 @@ cat > /etc/nginx/sites-available/projecttracker << NGINX
 server {
     listen 80;
     server_name ${DOMAIN};
-
     client_max_body_size 50M;
 
     location / {
@@ -317,31 +317,27 @@ certbot --nginx \
     --agree-tos \
     --email "${CERTBOT_EMAIL}" \
     -d "${DOMAIN}"
-
 info "SSL certificate obtained"
 
 # ---------------------------------------------------------------------------
-# Step 13 — DuckDNS auto-renewal
+# Step 13 — DuckDNS auto-renewal (only if using DuckDNS)
 # ---------------------------------------------------------------------------
-step "Setting up DuckDNS IP auto-renewal"
-
-mkdir -p /opt/duckdns
-cat > /opt/duckdns/update.sh << DUCK
+if [ "$USE_DUCKDNS" = true ]; then
+    step "Setting up DuckDNS IP auto-renewal"
+    mkdir -p /opt/duckdns
+    cat > /opt/duckdns/update.sh << DUCK
 #!/bin/bash
 curl -sk "https://www.duckdns.org/update?domains=${SUBDOMAIN}&token=${DUCKDNS_TOKEN}&ip=" > /opt/duckdns/duck.log
 DUCK
-
-chmod +x /opt/duckdns/update.sh
-chmod 700 /opt/duckdns/update.sh
-
-(crontab -l 2>/dev/null; echo "*/5 * * * * /opt/duckdns/update.sh") | crontab -
-
-/opt/duckdns/update.sh
-DUCK_RESULT=$(cat /opt/duckdns/duck.log)
-if [ "${DUCK_RESULT}" = "OK" ]; then
-    info "DuckDNS auto-renewal configured and working"
-else
-    warn "DuckDNS update returned: ${DUCK_RESULT} — check token and subdomain"
+    chmod 700 /opt/duckdns/update.sh
+    (crontab -l 2>/dev/null | grep -v duckdns; echo "*/5 * * * * /opt/duckdns/update.sh") | crontab -
+    /opt/duckdns/update.sh
+    DUCK_RESULT=$(cat /opt/duckdns/duck.log)
+    if [ "${DUCK_RESULT}" = "OK" ]; then
+        info "DuckDNS auto-renewal configured and working"
+    else
+        warn "DuckDNS update returned: ${DUCK_RESULT} — check token and subdomain"
+    fi
 fi
 
 # ---------------------------------------------------------------------------
@@ -366,17 +362,17 @@ echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━
 echo -e "${GREEN}  Setup complete!${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "  URL         : https://${DOMAIN}"
-echo "  App dir     : ${APP_DIR}"
-echo "  DB name     : ${DB_NAME}"
-echo "  DB user     : ${DB_USER}"
-echo "  DB password : ${DB_PASS}"
-echo ""
-echo -e "${YELLOW}  IMPORTANT: Save the database password — it will not be shown again.${NC}"
+echo "  URL      : https://${DOMAIN}"
+echo "  App dir  : ${APP_DIR}"
+echo "  DB name  : ${DB_NAME}"
+echo "  DB user  : ${DB_USER}"
+if [ ! -f "${APP_DIR}/data/config.json" ]; then
+    echo "  DB pass  : ${DB_PASS}"
+    echo -e "${YELLOW}  IMPORTANT: Save the DB password — it will not be shown again.${NC}"
+fi
 echo ""
 echo "  Useful commands:"
-echo "    View logs    : journalctl -u projecttracker -f"
-echo "    Restart app  : sudo systemctl restart projecttracker"
-echo "    App status   : sudo systemctl status projecttracker"
-echo "    Nginx logs   : sudo tail -f /var/log/nginx/error.log"
+echo "    View logs   : journalctl -u projecttracker -f"
+echo "    Restart app : sudo systemctl restart projecttracker"
+echo "    App status  : sudo systemctl status projecttracker"
 echo ""
