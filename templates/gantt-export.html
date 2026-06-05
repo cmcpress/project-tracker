@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<!--
+  gantt-export.html — Jinja2 template for PDF/PNG Gantt export.
+  Rendered server-side by WeasyPrint. Full implementation in Phase 7.
+
+  Template variables expected:
+    project     — project object
+    tasks       — list of task objects
+    gantt_svg   — pre-rendered SVG string
+    generated   — ISO datetime string
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  /* CSS custom properties so embedded SVG var() references resolve under WeasyPrint */
+  :root {
+    --gantt-bar:       #4a90e2;
+    --gantt-complete:  #22c55e;
+    --gantt-critical:  #ef4444;
+    --gantt-baseline:  #9ca3af;
+    --gantt-label-bg:  #f9fafb;
+    --gantt-bg:        #ffffff;
+    --gantt-row-alt:   #f3f4f6;
+    --text-primary:    #111827;
+    --text-secondary:  #6b7280;
+    --text-muted:      #9ca3af;
+    --border:          #e5e7eb;
+    --status-complete-text:    #2e7d32;
+    --status-in-progress-text: #e65100;
+    --status-blocked-text:     #c62828;
+    --status-planning-text:    #2196f3;
+    --status-not-started-text: #8892a4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    font-size: 12px;
+    color: #1f2937;
+    background: #fff;
+    padding: 24px;
+  }
+  .header { border-bottom: 2px solid #4a90e2; padding-bottom: 16px; margin-bottom: 20px; }
+  .header h1 { font-size: 22px; font-weight: 700; color: #1a1a2e; }
+  .header .meta { font-size: 11px; color: #6b7280; margin-top: 4px; }
+  .gantt-container { width: 100%; overflow: hidden; }
+  .gantt-svg-wrap { width: 100%; }
+  table { width: 100%; border-collapse: collapse; margin-top: 24px; font-size: 11px; }
+  th { background: #f0f2f5; padding: 6px 8px; text-align: left; font-weight: 600;
+       border-bottom: 1px solid #e4e7ec; }
+  td { padding: 5px 8px; border-bottom: 1px solid #e4e7ec; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8f9fa; }
+  .badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .badge-complete  { background: #e8f5e9; color: #2e7d32; }
+  .badge-in-progress { background: #fff3e0; color: #e65100; }
+  .badge-blocked   { background: #fdecea; color: #c62828; }
+  .badge-planning  { background: #e8f4fd; color: #2196f3; }
+  .badge-not-started { background: #f0f2f5; color: #8892a4; }
+  .footer { margin-top: 24px; font-size: 10px; color: #9ca3af; text-align: right; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>{{ project.name }}</h1>
+  <div class="meta">
+    {{ project.category }} ·
+    Generated {{ generated }}
+  </div>
+  {% if project.description %}
+  <div style="margin-top:8px; font-size:12px; color:#374151;">{{ project.description }}</div>
+  {% endif %}
+</div>
+
+<div class="gantt-container">
+  <div class="gantt-svg-wrap">
+    {{ gantt_svg | safe }}
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Task</th>
+      <th>Type</th>
+      <th>Status</th>
+      <th>Planned Start</th>
+      <th>Planned End</th>
+      <th>Assignees</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for task in tasks %}
+    <tr>
+      <td>{{ task.name }}</td>
+      <td>{{ task.type | capitalize }}</td>
+      <td>
+        <span class="badge badge-{{ task.status }}">
+          {{ task.status | replace('-', ' ') | title }}
+        </span>
+      </td>
+      <td>{{ task.start_date or '—' }}</td>
+      <td>{{ task.end_date or '—' }}</td>
+      <td>
+        {% for a in task.get('assignees', []) %}
+          {{ a.name }}{% if not loop.last %}, {% endif %}
+        {% endfor %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="footer">Project Tracker · {{ generated }}</div>
+
+</body>
+</html>

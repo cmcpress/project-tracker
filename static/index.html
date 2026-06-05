@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Tracker</title>
+
+  <!-- CSS load order: variables → base → layout → components → views -->
+  <link rel="stylesheet" href="/static/css/variables.css">
+  <link rel="stylesheet" href="/static/css/base.css">
+  <link rel="stylesheet" href="/static/css/layout.css">
+  <link rel="stylesheet" href="/static/css/components.css">
+  <link rel="stylesheet" href="/static/css/gantt.css">
+  <link rel="stylesheet" href="/static/css/kanban.css">
+  <link rel="stylesheet" href="/static/css/calendar.css">
+  <link rel="stylesheet" href="/static/css/timeline.css">
+  <link rel="stylesheet" href="/static/css/table.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============================================================ -->
+  <!-- TOPBAR                                                        -->
+  <!-- ============================================================ -->
+  <header id="topbar">
+    <span class="topbar__brand">Project Tracker <span class="topbar__version">v1.0</span></span>
+
+    <nav class="topbar__nav" id="view-nav" aria-label="View switcher">
+      <button class="topbar__nav-btn is-active" data-view="dashboard">Dashboard</button>
+      <button class="topbar__nav-btn" data-view="cards">Cards</button>
+      <button class="topbar__nav-btn" data-view="gantt">Gantt</button>
+      <button class="topbar__nav-btn" data-view="table">Table</button>
+      <button class="topbar__nav-btn" data-view="kanban">Kanban</button>
+      <button class="topbar__nav-btn" data-view="calendar">Calendar</button>
+      <button class="topbar__nav-btn" data-view="timeline">Timeline</button>
+      <button class="topbar__nav-btn" data-view="resource">Resources</button>
+      <button class="topbar__nav-btn" data-view="expenses">Expenses</button>
+      <span style="flex:1;"></span>
+      <button class="topbar__nav-btn" data-view="settings">⚙ Settings</button>
+    </nav>
+
+    <div class="topbar__actions">
+
+      <!-- Database dropdown menu -->
+      <div class="db-menu" id="db-menu">
+        <button class="topbar__nav-btn" id="db-menu-trigger" title="Database operations">
+          🗄 Database ▾
+        </button>
+        <div class="db-menu__dropdown" id="db-menu-dropdown">
+          <!-- Database file operations -->
+          <button class="db-menu__item" id="db-menu-new">📄 New Database…</button>
+          <button class="db-menu__item" id="db-menu-open">📂 Open Database…</button>
+          <button class="db-menu__item" id="db-menu-export-db">💾 Export Database…</button>
+
+          <!-- Recent databases submenu -->
+          <div class="db-menu__item db-menu__item--has-sub" id="db-menu-recent">
+            <span>🕐 Recent</span>
+            <span class="db-menu__sub-arrow">▸</span>
+            <div class="db-menu__sub" id="db-menu-recent-sub">
+              <div class="db-menu__sub-empty" id="db-menu-recent-empty">No recent databases</div>
+            </div>
+          </div>
+
+          <div class="db-menu__divider"></div>
+
+          <!-- Per-project export (shown when a project is selected) -->
+          <div id="db-menu-project-exports" style="display:none;">
+            <div class="db-menu__section-label" id="db-menu-project-label">Export project</div>
+            <button class="db-menu__item" id="db-menu-export-project-report">📄 Task Report (PDF)</button>
+            <button class="db-menu__item" id="db-menu-export-project-excel">📊 Project Excel</button>
+            <button class="db-menu__item" id="db-menu-export-project-json">⬇ Project JSON</button>
+            <div class="db-menu__divider"></div>
+          </div>
+
+          <!-- Data import / export -->
+          <button class="db-menu__item" id="db-menu-import-json">↑ Import JSON…</button>
+          <button class="db-menu__item" id="db-menu-export-json">↓ Export All (JSON)</button>
+          <button class="db-menu__item" id="db-menu-export-excel">↓ Export All (Excel)</button>
+        </div>
+      </div>
+
+      <button class="btn btn--primary btn--sm" id="btn-add-project">+ Project</button>
+    </div>
+
+    <!-- Hidden file input for JSON import (triggered by db-menu.js) -->
+    <input type="file" id="import-file-input" accept=".json" style="display:none;"
+           aria-hidden="true" tabindex="-1">
+  </header>
+
+  <!-- ============================================================ -->
+  <!-- SIDEBAR                                                       -->
+  <!-- ============================================================ -->
+  <aside id="sidebar">
+    <div class="sidebar__search">
+      <input
+        type="search"
+        class="sidebar__search-input"
+        id="sidebar-search"
+        placeholder="Search projects…"
+        autocomplete="off"
+      >
+    </div>
+
+    <!-- Project list grouped by category — rendered by sidebar.js -->
+    <div class="sidebar__project-list" id="sidebar-project-list">
+      <div class="empty-state" style="padding: var(--space-6) var(--space-3);">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <!-- Sidebar footer -->
+    <div class="sidebar__footer">
+      <div class="sidebar__footer-label">People</div>
+      <button class="btn btn--ghost btn--sm" id="btn-manage-people" style="width:100%; justify-content:flex-start;">
+        Manage →
+      </button>
+    </div>
+  </aside>
+
+  <!-- ============================================================ -->
+  <!-- MAIN CONTENT                                                  -->
+  <!-- ============================================================ -->
+  <main id="main">
+    <!-- Active view renders into this container -->
+    <div class="main__content" id="view-container">
+      <div class="empty-state">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </main>
+
+</div><!-- /#app -->
+
+<!-- Toast notification container -->
+<div id="toast-container" aria-live="polite"></div>
+
+<!-- JavaScript — ES modules, load order matters -->
+<script type="module" src="/static/js/main.js"></script>
+
+</body>
+</html>

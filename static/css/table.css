@@ -1,0 +1,181 @@
+/*
+ * table.css — Table view styles: sortable, filterable task list.
+ */
+
+.table-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Filter bar */
+.table-filters {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.table-filter-select {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: var(--font-size-sm);
+  background: var(--surface);
+  color: var(--text-primary);
+  outline: none;
+  cursor: pointer;
+}
+
+.table-filter-select:focus {
+  border-color: var(--border-focus);
+}
+
+.table-filter-input {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: var(--font-size-sm);
+  background: var(--surface);
+  color: var(--text-primary);
+  outline: none;
+  min-width: 160px;
+}
+
+.table-filter-input:focus {
+  border-color: var(--border-focus);
+}
+
+/* Scroll wrapper */
+.table-scroll {
+  flex: 1;
+  overflow: auto;
+}
+
+/* The table itself */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  background: var(--surface);
+}
+
+.data-table th {
+  position: sticky;
+  top: 0;
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--grey-50);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.data-table th:hover {
+  background: var(--grey-100);
+  color: var(--text-primary);
+}
+
+.data-table th.is-sorted {
+  color: var(--blue-text);
+}
+
+.data-table th .sort-indicator {
+  margin-left: var(--space-1);
+  opacity: 0.5;
+}
+
+.data-table th.is-sorted .sort-indicator {
+  opacity: 1;
+}
+
+.data-table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.data-table tbody tr:hover {
+  background: var(--grey-50);
+}
+
+/* Column-specific widths */
+.col-check     { width: 36px; text-align: center; }
+.col-wbs       { width: 64px; }
+.col-project   { width: 130px; }
+.col-task      { min-width: 180px; }
+.col-type      { width: 80px; }
+.col-rag       { width: 50px; text-align: center; }
+.col-status    { width: 110px; }
+.col-progress  { width: 110px; }
+.col-assignees { width: 90px; }
+.col-date      { width: 100px; }
+.col-duration  { width: 80px; }
+.col-deps      { width: 60px; text-align: center; }
+.col-items     { width: 60px; text-align: center; }
+.col-hours     { width: 64px; text-align: right; }
+
+/* Selected row highlight */
+tr.is-selected td {
+  background: var(--blue-50, #eff6ff) !important;
+}
+
+/* Bulk action bar */
+.bulk-action-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface);
+  border-top: 2px solid var(--blue);
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+  flex-wrap: wrap;
+}
+
+.bulk-action-bar__count {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-right: var(--space-2);
+  white-space: nowrap;
+}
+
+/* Project name tag in the table */
+.table-project-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.table-project-tag__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}

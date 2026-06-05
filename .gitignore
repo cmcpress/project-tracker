@@ -1,0 +1,73 @@
+# =============================================================
+# Project Tracker — .gitignore
+# =============================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.eggs/
+
+# Virtual environments
+venv/
+venvvenv/
+.venv/
+env/
+
+# PyInstaller build output
+build/
+dist/
+*.spec.bak
+
+# Installer output and third-party binaries
+installer/output/
+installer/MicrosoftEdgeWebview2Setup.exe
+
+# Database files (user data — never commit)
+*.db
+*.db-shm
+*.db-wal
+data/
+
+# Config (contains user-specific paths and recent file lists)
+config.json
+
+# Server — credentials and generated files (never commit)
+server/data/
+
+# Log files
+*.log
+startup.log
+
+# Inno Setup compiled output
+*.iss.bak
+
+# Project-specific exclusions
+PRINCE2.md
+CLAUDE.md
+dev-online-version.md
+build - Copy.bat
+resonants.db
+assets/
+installer/output/
+installer/iscc.log
+installer/MicrosoftEdgeWebview2Setup.exe
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Temporary files
+*.tmp
+*.temp
+~$*

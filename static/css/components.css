@@ -1,0 +1,437 @@
+/*
+ * components.css — Reusable UI components: buttons, badges, form elements,
+ * cards, avatars, progress bars, toggles.
+ * All colours reference CSS custom properties from variables.css.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Buttons                                                              */
+/* ------------------------------------------------------------------ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background var(--transition-fast), color var(--transition-fast),
+              border-color var(--transition-fast), box-shadow var(--transition-fast);
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Primary */
+.btn--primary {
+  background: var(--blue);
+  color: var(--text-inverse);
+  border-color: var(--blue);
+}
+.btn--primary:hover:not(:disabled) {
+  background: var(--blue-hover);
+  border-color: var(--blue-hover);
+}
+
+/* Secondary / outlined */
+.btn--secondary {
+  background: var(--surface);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+.btn--secondary:hover:not(:disabled) {
+  background: var(--grey-100);
+}
+
+/* Ghost */
+.btn--ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: transparent;
+}
+.btn--ghost:hover:not(:disabled) {
+  background: var(--grey-100);
+  color: var(--text-primary);
+}
+
+/* Danger */
+.btn--danger {
+  background: var(--status-blocked-bg);
+  color: var(--status-blocked-text);
+  border-color: var(--status-blocked-bg);
+}
+.btn--danger:hover:not(:disabled) {
+  background: #fca5a5;
+  border-color: #fca5a5;
+}
+
+/* Icon-only button */
+.btn--icon {
+  padding: var(--space-1);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius);
+}
+
+/* Sizes */
+.btn--sm {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-xs);
+}
+
+.btn--lg {
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--font-size-md);
+}
+
+/* ------------------------------------------------------------------ */
+/* Status badges                                                        */
+/* ------------------------------------------------------------------ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.badge--not-started {
+  background: var(--status-not-started-bg);
+  color: var(--status-not-started-text);
+}
+.badge--planning {
+  background: var(--status-planning-bg);
+  color: var(--status-planning-text);
+}
+.badge--in-progress {
+  background: var(--status-in-progress-bg);
+  color: var(--status-in-progress-text);
+}
+.badge--blocked {
+  background: var(--status-blocked-bg);
+  color: var(--status-blocked-text);
+}
+.badge--pending {
+  background: var(--status-pending-bg);
+  color: var(--status-pending-text);
+}
+.badge--complete {
+  background: var(--status-complete-bg);
+  color: var(--status-complete-text);
+}
+
+/* Type badge modifier */
+.badge--type {
+  background: var(--grey-100);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+/* Category colour band (used on project cards) */
+.badge--category {
+  background: var(--grey-100);
+  color: var(--text-secondary);
+}
+
+/* ------------------------------------------------------------------ */
+/* Form elements                                                        */
+/* ------------------------------------------------------------------ */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.form-label--required::after {
+  content: " *";
+  color: var(--status-blocked-text);
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.form-error {
+  font-size: var(--font-size-xs);
+  color: var(--status-blocked-text);
+}
+
+/* Inline form row — two or more fields side by side */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.form-row--3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+/* Checkbox */
+.form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.form-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--blue);
+}
+
+/* Colour swatch input */
+.colour-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.colour-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------------ */
+/* Progress bar                                                         */
+/* ------------------------------------------------------------------ */
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--grey-200);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-bar__fill {
+  height: 100%;
+  background: var(--blue);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-slow);
+}
+
+.progress-bar__fill--complete {
+  background: var(--status-complete-text);
+}
+
+/* ------------------------------------------------------------------ */
+/* Avatar (person initials)                                             */
+/* ------------------------------------------------------------------ */
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--text-inverse);
+  flex-shrink: 0;
+  background: var(--grey-400); /* default; overridden by inline style */
+  border: 2px solid var(--surface);
+}
+
+.avatar--sm {
+  width: 20px;
+  height: 20px;
+  font-size: 9px;
+}
+
+.avatar--lg {
+  width: 32px;
+  height: 32px;
+  font-size: var(--font-size-sm);
+}
+
+.avatar-stack {
+  display: flex;
+}
+
+.avatar-stack .avatar + .avatar {
+  margin-left: -6px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Project / task cards                                                 */
+/* ------------------------------------------------------------------ */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Colour accent band at the top of a project card */
+.card__accent {
+  height: 4px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+}
+
+.card__title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+}
+
+.card__body {
+  padding: 0 var(--space-5) var(--space-4);
+}
+
+/* ------------------------------------------------------------------ */
+/* Inline status selector                                               */
+/* ------------------------------------------------------------------ */
+
+.status-select {
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 90px;        /* fixed width so it never expands the grid column */
+  text-align: center;
+}
+
+.status-select--not-started {
+  background: var(--status-not-started-bg);
+  color: var(--status-not-started-text);
+}
+.status-select--planning {
+  background: var(--status-planning-bg);
+  color: var(--status-planning-text);
+}
+.status-select--in-progress {
+  background: var(--status-in-progress-bg);
+  color: var(--status-in-progress-text);
+}
+.status-select--blocked {
+  background: var(--status-blocked-bg);
+  color: var(--status-blocked-text);
+}
+.status-select--pending {
+  background: var(--status-pending-bg);
+  color: var(--status-pending-text);
+}
+.status-select--complete {
+  background: var(--status-complete-bg);
+  color: var(--status-complete-text);
+}
+
+/* ------------------------------------------------------------------ */
+/* Count badges (dep count, item count)                                */
+/* ------------------------------------------------------------------ */
+
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px var(--space-1);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  background: var(--grey-100);
+}
+
+/* ------------------------------------------------------------------ */
+/* Divider                                                              */
+/* ------------------------------------------------------------------ */
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: var(--space-3) 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Section header (used within views)                                  */
+/* ------------------------------------------------------------------ */
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.section-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--text-primary);
+}
