@@ -3,6 +3,8 @@ routes/export.py — Export and import endpoints.
 Baselines and critical path are also handled here.
 Full PDF/Gantt export implementation in Phase 7.
 """
+from __future__ import annotations
+
 
 from flask import Blueprint, jsonify, request, abort, Response
 from app.database import get_connection

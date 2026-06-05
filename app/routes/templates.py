@@ -12,6 +12,8 @@ Endpoints:
     DELETE /api/templates/<id>         Delete a template
     POST   /api/templates/<id>/apply   Apply template to a project
 """
+from __future__ import annotations
+
 
 from flask import Blueprint, jsonify, request, abort
 from app.database import get_connection

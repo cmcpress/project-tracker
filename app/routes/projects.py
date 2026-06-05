@@ -9,6 +9,8 @@ Endpoints:
     DELETE /api/projects/<id>       Delete project (cascades to tasks)
     PUT    /api/projects/reorder    Batch-update sort_order values
 """
+from __future__ import annotations
+
 
 from flask import Blueprint, jsonify, request, abort
 from app.database import get_connection

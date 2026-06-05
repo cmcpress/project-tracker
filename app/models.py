@@ -8,6 +8,8 @@ is written explicitly in the route files.
 Enumerated value constants are also defined here and shared with
 validation helpers used in route handlers.
 """
+from __future__ import annotations
+
 
 from dataclasses import dataclass, field
 from typing import Optional

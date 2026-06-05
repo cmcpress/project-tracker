@@ -13,6 +13,8 @@ Endpoints:
     PUT    /api/tasks/<id>/status         Quick status update
     PUT    /api/tasks/reorder             Batch sort_order update
 """
+from __future__ import annotations
+
 
 import re
 from flask import Blueprint, jsonify, request, abort

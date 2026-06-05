@@ -16,6 +16,8 @@ Rules:
   - Triggers use CREATE OR REPLACE FUNCTION + CREATE TRIGGER syntax.
 """
 
+from __future__ import annotations
+
 PG_MIGRATIONS: list[tuple[int, list[str]]] = [
 
     # v1 — Core schema

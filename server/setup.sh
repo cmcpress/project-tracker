@@ -86,22 +86,7 @@ read -rp "Proceed? (y/n): " CONFIRM
 [ "$CONFIRM" = "y" ] || error "Aborted."
 
 # ---------------------------------------------------------------------------
-# Step 1 — Open OS firewall ports
-# ---------------------------------------------------------------------------
-step "Configuring firewall"
-
-ufw allow OpenSSH
-ufw allow 80/tcp
-ufw allow 443/tcp
-ufw --force enable
-info "Firewall configured (ports 22, 80, 443 open)"
-
-warn "If the site is unreachable after setup, also open ports 80 and 443 in:"
-warn "Oracle Cloud Console → Networking → Virtual Cloud Networks"
-warn "→ your VCN → Security Lists → Default Security List → Add Ingress Rules"
-
-# ---------------------------------------------------------------------------
-# Step 2 — System update and package installation
+# Step 1 — System update and package installation
 # ---------------------------------------------------------------------------
 step "Installing system packages"
 
@@ -122,9 +107,25 @@ apt-get install -y -qq \
     python3-certbot-nginx \
     git \
     curl \
-    openssl
+    openssl \
+    ufw
 
 info "System packages installed"
+
+# ---------------------------------------------------------------------------
+# Step 2 — Open OS firewall ports (ufw now installed)
+# ---------------------------------------------------------------------------
+step "Configuring firewall"
+
+ufw allow OpenSSH
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw --force enable
+info "Firewall configured (ports 22, 80, 443 open)"
+
+warn "If the site is unreachable after setup, also open ports 80 and 443 in:"
+warn "Oracle Cloud Console → Networking → Virtual Cloud Networks"
+warn "→ your VCN → Security Lists → Default Security List → Add Ingress Rules"
 
 # ---------------------------------------------------------------------------
 # Step 3 — PostgreSQL setup
