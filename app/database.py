@@ -15,6 +15,8 @@ The public interface is unchanged from the SQLite-only version:
 Routes require zero changes to move between backends.
 """
 
+from __future__ import annotations
+
 import re
 import sqlite3
 import logging

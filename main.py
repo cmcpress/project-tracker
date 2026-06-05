@@ -20,6 +20,8 @@ Data storage:
         <project root>/data/projects.db
 """
 
+from __future__ import annotations
+
 import sys
 import os
 import json
